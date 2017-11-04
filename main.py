@@ -40,8 +40,8 @@ class AccountSignIn(webapp2.RequestHandler):
         user = User.all().filter('email', email).get()
         if user and user.verify_password(password):
             self.response.headers['Content-Type'] = JSON
-            return self.response.write(json.dumps({'token': 'thisisis'}))
-
+            return self.response.write(json.dumps({'token': generate_jwt(email)}))
+        self.response.set_status(405)
         return self.response.write('invalid login')
 
     @jwt_secure

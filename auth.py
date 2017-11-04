@@ -57,6 +57,7 @@ def jwt_secure(f):
         try:
             claims = verify_jwt(self.request.headers)
         except JWTError as e:
+            self.response.set_status(405)
             return self.response.write(e)
         return f(self, *args, claims=claims, **kwargs)
     return wrapper
@@ -69,6 +70,7 @@ def email_and_password_required(f):
         email = self.request.get('email')
         password = self.request.get('password')
         if not email or not password:
+            self.response.set_status(405)
             return self.response.write('email and password are required')
         return f(self, *args, email=email, password=password, **kwargs)
     return wrapper
