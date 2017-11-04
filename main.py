@@ -13,14 +13,41 @@
 # limitations under the License.
 
 import webapp2
+from models import User, Secret
+
+from auth import jwt_secure
+from auth import generate_jwt
+from auth import email_and_password_required
 
 
 class MainPage(webapp2.RequestHandler):
+
+    @jwt_secure
     def get(self):
         self.response.headers['Content-Type'] = 'text/plain'
-        self.response.write('Hello, World!')
+        self.response.write(Secret.get_secret('something'))
 
+
+class AccountSignUp(webapp2.RequestHandler):
+
+    @email_and_password_required
+    def post(self, email=None, password=None):
+        User(email=email, password=password).save()
+        self.response.write(email)
+
+class AccountSignIn(webapp2.RequestHandler):
+
+    @email_and_password_required
+    def post(self, email=None, password=None):
+        user  = User.all().filter(email=email).get()
+        if user and user.verify_password(password):
+            return {'token': generate_jwt(email)}
+
+        raise Exception('invalid login')
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),
+    ('/account/signup', AccountSignUp),
+    ('/account/signin', AccountSignIn),
+    ('/api', MainPage),
 ], debug=True)
