@@ -1,31 +1,22 @@
-# Copyright 2016 Google Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+import json
 
 import webapp2
-from models import User, Secret
+
+from models import User
 
 from auth import jwt_secure
 from auth import generate_jwt
 from auth import email_and_password_required
 
+JSON = 'application/json'
+
 
 class MainPage(webapp2.RequestHandler):
 
     @jwt_secure
-    def get(self):
-        self.response.headers['Content-Type'] = 'text/plain'
-        self.response.write(Secret.get_secret('something'))
+    def get(self, claims=None):
+        self.response.headers['Content-Type'] = JSON
+        self.response.write(json.dumps(claims))
 
 
 class AccountSignUp(webapp2.RequestHandler):
@@ -33,21 +24,32 @@ class AccountSignUp(webapp2.RequestHandler):
     @email_and_password_required
     def post(self, email=None, password=None):
         User(email=email, password=password).save()
-        self.response.write(email)
+        self.response.headers['Content-Type'] = JSON
+        self.response.write(json.dumps({'token': generate_jwt(email)}))
+
 
 class AccountSignIn(webapp2.RequestHandler):
 
     @email_and_password_required
     def post(self, email=None, password=None):
-        user  = User.all().filter(email=email).get()
+        user = User.all().filter('email', email).get()
         if user and user.verify_password(password):
-            return {'token': generate_jwt(email)}
+            self.response.headers['Content-Type'] = JSON
+            return self.response.write(json.dumps({'token': generate_jwt(email)}))
 
-        raise Exception('invalid login')
+        return self.response.write('invalid login')
+
+    @jwt_secure
+    def put(self, claims=None):
+        email = claims['user']
+        new_email = self.request.get('email')
+        user = User.all().filter('email', email).get()
+        user.email = new_email
+        user.save()
+
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     ('/account/signup', AccountSignUp),
     ('/account/signin', AccountSignIn),
-    ('/api', MainPage),
 ], debug=True)

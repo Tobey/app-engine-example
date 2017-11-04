@@ -1,1 +1,4 @@
 pyjwt==1.5.3
+pycrypto
+ecdsa
+cryptography

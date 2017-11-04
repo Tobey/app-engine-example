@@ -15,8 +15,8 @@ class User(db.Model):
     @staticmethod
     def hash_with_secret(string, secret):
         hashed_password = hmac.new(
-            string,
-            msg=secret,
+            str(string),
+            msg=str(secret),
             digestmod=hashlib.sha256
         ).digest()
         return base64.b64encode(hashed_password).decode()

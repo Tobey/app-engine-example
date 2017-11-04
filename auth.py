@@ -1,9 +1,9 @@
-import jwt
-try:
-    from jwt.contrib.algorithms.py_ecdsa import ECAlgorithm
-    jwt.register_algorithm('ES256', ECAlgorithm(ECAlgorithm.SHA256)) # Legacy encryption for Google app Engine
-except BaseException:
-    pass  # Cpython supported by this system
+# import jwt
+# try:
+#     from jwt.contrib.algorithms.py_ecdsa import ECAlgorithm
+#     jwt.register_algorithm('ES256', ECAlgorithm(ECAlgorithm.SHA256)) # Legacy encryption for Google app Engine
+# except BaseException:
+#     pass  # Cpython supported by this system
 
 from models import Secret
 
@@ -13,15 +13,11 @@ class JWTError(Exception):
 
 
 def get_token_from_header(headers):
-    auth = headers.get(
-        'HTTP_AUTHORIZATION',
-        ''
-    )
-
+    auth = headers.get('Authorization', '')
     try:
         standard, token = auth.split(' ')
     except:
-        standard = None
+        standard = token = None
     if standard != 'Bearer':
         raise JWTError('Authorization header must be "Bearer {Token}"')
     return token
@@ -31,11 +27,14 @@ def verify_jwt(headers):
     token = get_token_from_header(
         headers
     )
-    payload = jwt.decode(
-        token,
-        Secret.get_secret('jwt'),
-        verify=True
-    )
+    try:
+        payload = jwt.decode(
+            token,
+            Secret.get_secret('jwt'),
+            verify=True
+        )
+    except:
+        raise JWTError('Invalid Token')
 
     return payload
 
@@ -47,7 +46,8 @@ def generate_jwt(email):
         'aud': 'hopster',
         'user': email
     }
-    token = jwt.encode(payload=claims, key=Secret.get_secret('jwt'), algorithm='RS512')
+    return 'lol', claims
+    token = jwt.encode(payload=claims, key=Secret.get_secret('jwt'))
     return token, claims
 
 
@@ -56,10 +56,10 @@ def jwt_secure(f):
 
     def wrapper(self, *args, **kwargs):
         try:
-            verify_jwt(self.request.headers)
+            claims = verify_jwt(self.request.headers)
         except JWTError as e:
             return self.response.write(e)
-        return f(self, *args, **kwargs)
+        return f(self, *args, claims=claims, **kwargs)
     return wrapper
 
 
@@ -69,7 +69,7 @@ def email_and_password_required(f):
     def wrapper(self, *args, **kwargs):
         email = self.request.get('email')
         password = self.request.get('password')
-        if not email and password:
-            raise Exception('email and password required')
+        if not email or not password:
+            return self.response.write('email and password are required')
         return f(self, *args, email=email, password=password, **kwargs)
     return wrapper
