@@ -15,7 +15,7 @@
            data =
              $.ajax({
                   type: "POST",
-                  url: "http://localhost:8080/account/signin",
+                  url: window.location.origin + "/account/signin",
                   data: $('.login-form').serializeArray(),
                   success: function(msg){
                      var params = {
@@ -23,13 +23,13 @@
                         };
 
                         //Add authentication headers in URL
-                        var url = ['http://localhost:8080/', $.param(params)].join('?');
+                        var url = [window.location.origin+'/', $.param(params)].join('?');
 
                         //Open window
                         window.open(url);
                   },
                   error: function(XMLHttpRequest, textStatus, errorThrown) {
-                      $('.msg').html(errorThrown)
+                         $('.msg').html(errorThrown)
                          setInterval(function(){$('.msg').html('')}, 2000);
                   }
                   })
@@ -39,7 +39,7 @@
            data =
              $.ajax({
                   type: "POST",
-                  url: "http://localhost:8080/account/signup",
+                  url: window.location.origin + "/account/signup",
                   data: $('.register-form').serializeArray(),
                   success: function(msg){
                         alert( "User Created:  Now login");
