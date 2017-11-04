@@ -23,6 +23,9 @@ class AccountSignUp(webapp2.RequestHandler):
 
     @email_and_password_required
     def post(self, email=None, password=None):
+        user = User.all().filter('email', email).get()
+        if user:
+            return self.response.write('email already exists')
         User(email=email, password=password).save()
         self.response.headers['Content-Type'] = JSON
         self.response.write(json.dumps({'token': generate_jwt(email)}))
