@@ -25,7 +25,8 @@ class User(db.Model):
         return self.password == self.hash_with_secret(password, Secret.get_secret('password'))
 
     def put(self, **kwargs):
-        self.password = self.hash_with_secret(self.password, Secret.get_secret('password'))
+        if not self.is_saved():
+            self.password = self.hash_with_secret(self.password, Secret.get_secret('password'))
         super(User, self).put(**kwargs)
 
     save = put
