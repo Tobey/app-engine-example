@@ -1,9 +1,9 @@
-# import jwt
-# try:
-#     from jwt.contrib.algorithms.py_ecdsa import ECAlgorithm
-#     jwt.register_algorithm('ES256', ECAlgorithm(ECAlgorithm.SHA256)) # Legacy encryption for Google app Engine
-# except BaseException:
-#     pass  # Cpython supported by this system
+import jwt
+try:
+    from jwt.contrib.algorithms.py_ecdsa import ECAlgorithm
+    jwt.register_algorithm('ES256', ECAlgorithm(ECAlgorithm.SHA256)) # Legacy encryption for Google app Engine
+except BaseException:
+    pass  # Cpython supported by this system
 
 from models import Secret
 
@@ -46,7 +46,6 @@ def generate_jwt(email):
         'aud': 'hopster',
         'user': email
     }
-    return 'lol', claims
     token = jwt.encode(payload=claims, key=Secret.get_secret('jwt'))
     return token, claims
 
@@ -72,4 +71,13 @@ def email_and_password_required(f):
         if not email or not password:
             return self.response.write('email and password are required')
         return f(self, *args, email=email, password=password, **kwargs)
+    return wrapper
+
+
+def set_header(f):
+    def wrapper(self, *args, **kwargs):
+        auth = self.request.get('authorization')
+        if auth:
+            self.request.headers['Authorization'] = 'Bearer ' + auth
+        return f(self, *args, **kwargs)
     return wrapper

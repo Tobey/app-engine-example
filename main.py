@@ -6,6 +6,7 @@ from models import User
 
 from auth import jwt_secure
 from auth import generate_jwt
+from auth import set_header
 from auth import email_and_password_required
 
 JSON = 'application/json'
@@ -13,10 +14,11 @@ JSON = 'application/json'
 
 class MainPage(webapp2.RequestHandler):
 
+    @set_header
     @jwt_secure
     def get(self, claims=None):
         self.response.headers['Content-Type'] = JSON
-        self.response.write(json.dumps(claims))
+        self.response.write('This is a secure view \n'+ json.dumps(claims))
 
 
 class AccountSignUp(webapp2.RequestHandler):
@@ -28,7 +30,7 @@ class AccountSignUp(webapp2.RequestHandler):
             return self.response.write('email already exists')
         User(email=email, password=password).save()
         self.response.headers['Content-Type'] = JSON
-        self.response.write(json.dumps({'token': generate_jwt(email)}))
+        self.response.write( json.dumps({'token': generate_jwt(email)}))
 
 
 class AccountSignIn(webapp2.RequestHandler):
@@ -38,7 +40,7 @@ class AccountSignIn(webapp2.RequestHandler):
         user = User.all().filter('email', email).get()
         if user and user.verify_password(password):
             self.response.headers['Content-Type'] = JSON
-            return self.response.write(json.dumps({'token': generate_jwt(email)}))
+            return self.response.write(json.dumps({'token': 'thisisis'}))
 
         return self.response.write('invalid login')
 
