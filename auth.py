@@ -30,7 +30,6 @@ def verify_jwt(headers):
     token = get_token_from_header(
         headers
     )
-    print token
     try:
         payload = jwt.decode(
             token,
@@ -84,6 +83,6 @@ def set_header(f):
     def wrapper(self, *args, **kwargs):
         auth = self.request.get('authorization')
         if auth:
-            self.request.headers['Authorization'] = 'Bearer ' + urllib.unquote_plus(auth)
+            self.request.headers['Authorization'] = 'Bearer ' +auth
         return f(self, *args, **kwargs)
     return wrapper
