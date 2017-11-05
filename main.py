@@ -1,4 +1,5 @@
 import json
+import urllib
 
 import webapp2
 
@@ -30,7 +31,7 @@ class AccountSignUp(webapp2.RequestHandler):
             return self.response.write('email already exists')
         User(email=email, password=password).save()
         self.response.headers['Content-Type'] = JSON
-        self.response.write( json.dumps({'token': generate_jwt(email)}))
+        self.response.write( json.dumps({'token': urllib.quote_plus(generate_jwt(email))}))
 
 
 class AccountSignIn(webapp2.RequestHandler):
@@ -40,7 +41,7 @@ class AccountSignIn(webapp2.RequestHandler):
         user = User.all().filter('email', email).get()
         if user and user.verify_password(password):
             self.response.headers['Content-Type'] = JSON
-            return self.response.write(json.dumps({'token': generate_jwt(email)}))
+            return self.response.write(json.dumps({'token': urllib.quote_plus(generate_jwt(email))}))
         self.response.set_status(405)
         return self.response.write('invalid login')
 

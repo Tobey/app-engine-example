@@ -1,3 +1,6 @@
+import urllib
+import datetime
+
 import jwt
 try:
     from jwt.contrib.algorithms.py_ecdsa import ECAlgorithm
@@ -27,27 +30,28 @@ def verify_jwt(headers):
     token = get_token_from_header(
         headers
     )
+    print token
     try:
         payload = jwt.decode(
             token,
             Secret.get_secret('jwt'),
-            verify=True
+            verify=True,
+            algorithms=['HS256']
         )
-    except:
-        raise JWTError('Invalid Token')
+    except Exception as e:
+        raise JWTError('Invalid Token: '+str(e))
 
     return payload
 
 
 def generate_jwt(email):
     claims = {
-        'exp': 'never',
+        'exp': datetime.datetime.now() + datetime.timedelta(days=1),
         'iss': 'toby',
-        'aud': 'hopster',
         'user': email
     }
-    token = jwt.encode(payload=claims, key=Secret.get_secret('jwt'))
-    return token, claims
+    token = jwt.encode(payload=claims, key=Secret.get_secret('jwt'), algorithm='HS256')
+    return token
 
 
 def jwt_secure(f):
@@ -80,6 +84,6 @@ def set_header(f):
     def wrapper(self, *args, **kwargs):
         auth = self.request.get('authorization')
         if auth:
-            self.request.headers['Authorization'] = 'Bearer ' + auth
+            self.request.headers['Authorization'] = 'Bearer ' + urllib.unquote_plus(auth)
         return f(self, *args, **kwargs)
     return wrapper
